@@ -82,41 +82,46 @@
             <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">Simulación SED - Estación Villa Zaita<br>Línea 1 Metro de Panamá</p>
         </div>
 
-        <!-- Dashboard Estadístico -->
+        <!-- Dashboard Estadístico (Ecuación de Conservación) -->
         <div class="grid grid-cols-2 gap-3 mb-6">
             <div class="stat-card col-span-2 text-center bg-slate-800/90 border-slate-600">
                 <span class="stat-label">Reloj de Simulación (Hora Pico)</span>
                 <span class="stat-value text-white text-2xl tracking-widest font-mono" id="ui-time">06:30:00</span>
             </div>
-            <div class="stat-card">
-                <span class="stat-label">Ingresos</span>
-                <span class="stat-value text-emerald-400" id="ui-arrivals">0</span>
+            
+            <div class="col-span-2 mt-2">
+                <span class="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Ecuación de Conservación</span>
+            </div>
+            
+            <div class="stat-card col-span-2 bg-emerald-950/30 border-emerald-800/50">
+                <span class="stat-label text-emerald-300">Total Ingresados al Sistema</span>
+                <span class="stat-value text-emerald-400 text-2xl" id="ui-arrivals">0</span>
             </div>
             <div class="stat-card">
-                <span class="stat-label">Abordajes</span>
+                <span class="stat-label">= Abordados</span>
                 <span class="stat-value text-indigo-400" id="ui-boarded">0</span>
             </div>
             <div class="stat-card">
-                <span class="stat-label">Fila Torniquete</span>
+                <span class="stat-label">+ En Torniquetes</span>
                 <span class="stat-value text-amber-400" id="ui-turnstile-queue">0</span>
             </div>
             <div class="stat-card">
-                <span class="stat-label">Fila Andenes</span>
+                <span class="stat-label">+ En Tránsito</span>
+                <span class="stat-value text-purple-400" id="ui-transit">0</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">+ En Andén</span>
                 <span class="stat-value text-blue-400" id="ui-platform-queue">0</span>
             </div>
+
             <!-- KPI Crítico: Rezagados -->
-            <div class="stat-card col-span-2 border-rose-500/30 bg-rose-950/40 relative overflow-hidden">
+            <div class="stat-card col-span-2 border-rose-500/30 bg-rose-950/40 relative overflow-hidden mt-2">
                 <div class="absolute top-0 right-0 w-16 h-16 bg-rose-500/10 rounded-bl-full -mr-8 -mt-8"></div>
-                <span class="stat-label text-rose-300">Pasajeros que perdieron al menos un tren</span>
+                <span class="stat-label text-rose-300">Saturación: Rezagados (Esperan otro tren)</span>
                 <div class="flex justify-between items-baseline">
                     <span class="stat-value text-rose-400 text-3xl" id="ui-rezagados">0</span>
                     <span class="text-sm font-bold text-rose-300 bg-rose-900/50 px-2 py-1 rounded" id="ui-rezagados-pct">0.0%</span>
-                    <span class="text-[10px] text-rose-200 mt-1">Personas únicas; no significa que abandonaron la estación.</span>
                 </div>
-            </div>
-            <div class="stat-card col-span-2 mt-3">
-                <span class="stat-label">Pendientes dentro de la estación</span>
-                <span class="stat-value text-cyan-300" id="ui-pending">0</span>
             </div>
         </div>
 
@@ -124,7 +129,7 @@
         <div class="mb-2 p-3 bg-slate-800/60 border border-slate-700/50 rounded-lg shadow-inner">
             <h4 class="text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-2 border-b border-slate-700 pb-1 flex justify-between">
                 <span>Histórico: Saturación</span>
-                <span class="text-rose-400">Referencia visual: 2%</span>
+                <span class="text-rose-400">Meta: 1-2%</span>
             </h4>
             <div class="w-full h-28">
                 <canvas id="historyChart"></canvas>
@@ -134,24 +139,30 @@
 
     <!-- UI Overlay Derecho (Controles y Gráfica) -->
     <div id="ui-panel-right" class="p-5 shadow-2xl">
-        <!-- Modelo Matemático Activo -->
+        
+        <!-- Modelo Matemático Activo (Cálculo de Tasas) -->
         <div class="mb-5 p-3 bg-slate-800/50 border border-slate-700/50 rounded-lg">
-            <h4 class="text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-2 border-b border-slate-700 pb-1">Motor Estocástico Activo</h4>
+            <h4 class="text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-2 border-b border-slate-700 pb-1">Análisis Teoría de Colas (M/G/c)</h4>
             <div class="flex justify-between items-center text-[10px] text-slate-400 mb-1">
-                <span>Llegadas:</span> <span class="text-emerald-400 font-mono">Exponencial (tiempo medio)</span>
+                <span>Demanda (λ):</span> 
+                <span class="text-emerald-400 font-mono font-bold" id="ui-lambda-rate">50.0 pax/min</span>
             </div>
-            <div class="flex justify-between items-center text-[10px] text-slate-400">
-                <span>Torniquetes:</span> <span class="text-amber-400 font-mono">Triangular (2, moda ajustable, 6 s)</span>
+            <div class="flex justify-between items-center text-[10px] text-slate-400 mb-1">
+                <span>Servicio Base (μ):</span> 
+                <span class="text-amber-400 font-mono font-bold" id="ui-mu-rate">20.0 pax/min</span>
+            </div>
+            <div class="flex justify-between items-center text-[10px] text-slate-400 pt-1 border-t border-slate-700 mt-1">
+                <span>Capacidad Total (c×μ):</span> 
+                <span class="text-indigo-400 font-mono font-bold" id="ui-capacity-rate">180.0 pax/min</span>
             </div>
         </div>
 
         <!-- Aporte: criterio de variabilidad y plan de observación -->
         <details class="mb-5 p-3 bg-slate-800/50 border border-amber-500/30 rounded-lg">
-            <summary class="cursor-pointer text-[10px] font-bold text-amber-300 uppercase tracking-wider">Criterio del tiempo de validación</summary>
+            <summary class="cursor-pointer text-[10px] font-bold text-amber-300 uppercase tracking-wider">Criterio estadístico</summary>
             <div class="mt-3 space-y-2 text-[10px] leading-relaxed text-slate-300">
-                <p>Mientras no se disponga de mediciones de campo, el modelo utiliza una distribución triangular con mínimo de 2 s, moda de 3 s y máximo de 6 s. Es un supuesto de trabajo, no un resultado medido en la estación.</p>
-                <p>La media teórica de esta distribución es (2 + 3 + 6) / 3 = 3.67 s. Se recomienda recopilar al menos 30 observaciones reales para validar o sustituir estos parámetros.</p>
-                <p>En la muestra se propone registrar la duración y situaciones que puedan influir, como usuarios frecuentes u ocasionales, adultos mayores, niños o pasajeros con equipaje.</p>
+                <p>El código actual usa una distribución Lognormal para representar validaciones que suelen ser breves y algunas que tardan más; por ahora es un supuesto, no un resultado de mediciones reales.</p>
+                <p>Si aún no se cuenta con datos, la retroalimentación de la profesora propone usar una distribución Triangular (2,3,6). Con al menos 30 observaciones se puede revisar si los datos justifican la Lognormal y ajustar sus parámetros μ y σ.</p>
             </div>
         </details>
 
@@ -183,7 +194,7 @@
         <div class="flex-1">
             <div class="control-group">
                 <label class="text-xs text-slate-300 flex justify-between font-medium">
-                    <span>Tiempo medio entre llegadas</span>
+                    <span>Llegada Promedio (1/λ)</span>
                     <span id="val-arrival" class="text-emerald-400 font-mono">1.2s</span>
                 </label>
                 <input type="range" id="param-arrival" class="slider" min="0.2" max="5" step="0.1" value="1.2">
@@ -191,30 +202,38 @@
 
             <div class="control-group">
                 <label class="text-xs text-slate-300 flex justify-between font-medium">
-                    <span>Moda del tiempo de validación</span>
+                    <span>Validación Media (1/μ)</span>
                     <span id="val-turnstile" class="text-amber-400 font-mono">3.0s</span>
                 </label>
-                <input type="range" id="param-turnstile" class="slider" min="2" max="5" step="0.5" value="3.0">
+                <input type="range" id="param-turnstile" class="slider" min="1" max="8" step="0.5" value="3.0">
             </div>
 
+            <!-- Nuevo Slider: Cantidad de Torniquetes Activos (c) -->
             <div class="control-group">
                 <label class="text-xs text-slate-300 flex justify-between font-medium">
-                    <span>Capacidad de prueba por tren (supuesto)</span>
-                    <span id="val-capacity" class="text-fuchsia-300 font-mono">40 pasajeros</span>
+                    <span>Torniquetes de Entrada Activos (c)</span>
+                    <span id="val-active-ts" class="text-indigo-400 font-mono">9</span>
                 </label>
-                <input type="range" id="param-capacity" class="slider" min="10" max="200" step="5" value="40">
-                <p class="text-[10px] text-slate-400 mt-1">Valor editable para experimentar; no representa una capacidad oficial verificada.</p>
+                <input type="range" id="param-active-ts" class="slider" min="1" max="9" step="1" value="9">
             </div>
 
             <div class="control-group">
                 <label class="text-xs text-slate-300 flex justify-between font-medium">
-                    <span>Headway Tren (intervalo)</span>
+                    <span>Capacidad de pasajeros por tren</span>
+                    <span id="val-train-capacity" class="text-fuchsia-400 font-mono">40 pasajeros</span>
+                </label>
+                <input type="range" id="param-train-capacity" class="slider" min="10" max="300" step="5" value="40">
+                <p class="text-[10px] text-slate-500 mt-1">Capacidad supuesta y editable para experimentar.</p>
+            </div>
+
+            <div class="control-group">
+                <label class="text-xs text-slate-300 flex justify-between font-medium">
+                    <span>Headway Tren (Fijo)</span>
                     <span id="val-headway" class="text-blue-400 font-mono">90s</span>
                 </label>
                 <input type="range" id="param-headway" class="slider" min="45" max="300" step="5" value="90">
             </div>
             
-            <!-- Nuevo Control: Dwell Time -->
             <div class="control-group">
                 <label class="text-xs text-slate-300 flex justify-between font-medium">
                     <span>Dwell Time (Parada)</span>
@@ -231,35 +250,21 @@
                 <input type="range" id="param-speed" class="slider" min="1" max="20" step="1" value="5">
             </div>
 
-            <div class="mb-4 p-3 rounded-lg bg-slate-800/70 border border-emerald-500/20 text-[10px] text-slate-300 space-y-1">
-                <p> <strong class="text-emerald-300">Tasa de llegada (λ):</strong> <span id="ui-lambda-rate">50.0 pasajeros/min</span></p>
-                <p><strong class="text-amber-300">Servicio medio teórico:</strong> <span id="ui-service-mean">3.67 s</span></p>
-                <p><strong class="text-amber-300">Capacidad teórica de torniquetes:</strong> <span id="ui-turnstile-capacity">98.2 pasajeros/min</span></p>
-                <p class="text-slate-400">Se consideran 6 torniquetes de entrada en este modelo.</p>
-            </div>
-
             <!-- Botones de Control de la Simulación -->
             <div class="mt-8 pb-2 flex gap-2">
-                <button id="btn-play"
-                    class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded transition-colors shadow-lg">
+                <button id="btn-play" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded transition-colors shadow-lg">
                     ▶ Play
                 </button>
-                
-                <button id="btn-pause"
-                    class="flex-1 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold rounded transition-colors shadow-lg">
+                <button id="btn-pause" class="flex-1 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold rounded transition-colors shadow-lg">
                     ⏸ Pausa
                 </button>
-                
-                <button id="btn-reset"
-                    class="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold rounded transition-colors shadow-lg">
+                <button id="btn-reset" class="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold rounded transition-colors shadow-lg">
                     🔄 Reset
-                
                 </button>
             </div>
             
             <!-- Botón independiente para ver resultados -->
-            <button id="btn-finish"
-                class="w-full mt-3 mb-4 py-3 bg-cyan-700 hover:bg-cyan-600 text-white text-sm font-bold rounded-lg transition-colors shadow-lg">
+            <button id="btn-finish" class="w-full mt-3 mb-4 py-3 bg-cyan-700 hover:bg-cyan-600 text-white text-sm font-bold rounded-lg transition-colors shadow-lg">
                 ■ Finalizar y ver resultados
             </button>
         </div>
@@ -269,241 +274,177 @@
         🖱️ <b>Botón izquierdo:</b> Rotar<br><b>Botón derecho:</b> Desplazar (Pan)<br><b>Botón central:</b> Zoom
     </div>
 
-<!-- PANTALLA COMPLETA DE RESULTADOS -->
-<section id="analytics-page">
-
-    <header class="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 px-6 py-5 bg-slate-900 border-b border-slate-700 shadow-xl">
-        <div>
-            <p class="text-sm uppercase tracking-widest text-cyan-400 font-bold">
-                DIGITAL TWIN · VILLA ZAITA
-            </p>
-            <h2 class="text-2xl md:text-3xl font-bold text-white">
-                Resultados de la simulación
-            </h2>
-            <p id="analytics-status" class="text-sm text-slate-400 mt-1">
-                Resumen de la hora pico
-            </p>
-        </div>
-
-        <button id="btn-back-sim"
-            class="px-5 py-3 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold">
-            ← Volver a simulación
-        </button>
-    </header>
-
-    <main class="max-w-screen-2xl mx-auto p-5 md:p-8 space-y-8">
-
-        <!-- INDICADORES PRINCIPALES -->
-        <div>
-            <h3 class="text-lg font-bold text-cyan-300 mb-4">
-                Indicadores generales
-            </h3>
-
-            <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-
-                <div class="analytics-card">
-                    <p class="stat-label">Tiempo simulado</p>
-                    <p id="a-time" class="text-3xl font-bold text-white font-mono">06:30:00</p>
-                </div>
-
-                <div class="analytics-card">
-                    <p class="stat-label">Ingresos</p>
-                    <p id="a-arrivals" class="text-4xl font-bold text-emerald-400">0</p>
-                    <p class="text-xs text-slate-400">Pasajeros ingresados</p>
-                </div>
-
-                <div class="analytics-card">
-                    <p class="stat-label">Abordajes</p>
-                    <p id="a-boarded" class="text-4xl font-bold text-indigo-400">0</p>
-                    <p class="text-xs text-slate-400">Pasajeros que abordaron</p>
-                </div>
-
-                <div class="analytics-card">
-                    <p class="stat-label">Pasajeros que perdieron al menos un tren</p>
-                    <p id="a-late" class="text-4xl font-bold text-rose-400">0</p>
-                    <p class="text-xs text-slate-400">Personas únicas; pueden abordar después</p>
-                </div>
-
-                <div class="analytics-card">
-                    <p class="stat-label">Porcentaje de pasajeros retrasados</p>
-                    <p id="a-percent" class="text-4xl font-bold text-rose-300">0.0%</p>
-                </div>
-                <div class="analytics-card">
-                    <p class="stat-label">Eventos de tren perdido</p>
-                    <p id="a-missed-events" class="text-4xl font-bold text-orange-300">0</p>
-                    <p class="text-xs text-slate-400">Puede haber más de un evento por persona</p>
-                </div>
-                <div class="analytics-card">
-                    <p class="stat-label">Pendientes al finalizar</p>
-                    <p id="a-pending" class="text-4xl font-bold text-cyan-300">0</p>
-                    <p class="text-xs text-slate-400">Siguen dentro del sistema</p>
-                </div>
-                <div class="analytics-card">
-                    <p class="stat-label">Balance de pasajeros</p>
-                    <p id="a-balance" class="text-4xl font-bold text-emerald-300">0</p>
-                    <p class="text-xs text-slate-400">Ingresados − abordados − pendientes (debe ser 0)</p>
-                </div>
-
-                <div class="analytics-card">
-                    <p class="stat-label">Fila de torniquetes</p>
-                    <p id="a-turnstile" class="text-4xl font-bold text-amber-300">0</p>
-                </div>
-
-                <div class="analytics-card">
-                    <p class="stat-label">Personas en andenes</p>
-                    <p id="a-platform" class="text-4xl font-bold text-blue-300">0</p>
-                </div>
-
-                <div class="analytics-card">
-                    <p class="stat-label">Tiempo promedio de espera</p>
-                    <p id="a-wait" class="text-4xl font-bold text-cyan-300">0.0 s</p>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- TIEMPOS DE ESPERA -->
-        <div>
-            <h3 class="text-lg font-bold text-cyan-300 mb-4">
-                Análisis de tiempos de espera
-            </h3>
-
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-
-                <div class="analytics-card">
-                    <p class="stat-label">Último tiempo registrado</p>
-                    <p id="a-last" class="text-3xl font-bold text-indigo-300">--</p>
-                </div>
-
-                <div class="analytics-card">
-                    <p class="stat-label">Tiempo mínimo</p>
-                    <p id="a-min" class="text-3xl font-bold text-emerald-300">--</p>
-                </div>
-
-                <div class="analytics-card">
-                    <p class="stat-label">Tiempo máximo</p>
-                    <p id="a-max" class="text-3xl font-bold text-amber-300">--</p>
-                </div>
-
-                <div class="analytics-card">
-                    <p class="stat-label">Total de esperas registradas</p>
-                    <p id="a-wait-count" class="text-3xl font-bold text-cyan-300">0</p>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- GRÁFICAS -->
-        <div>
-            <h3 class="text-lg font-bold text-cyan-300 mb-4">
-                Comportamiento de la simulación
-            </h3>
-
-            <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-
-                <div class="analytics-card">
-                    <h3 class="text-lg font-bold text-white mb-2">
-                        Histórico de saturación
-                    </h3>
-                    <p class="text-sm text-slate-400 mb-4">
-                        Porcentaje de pasajeros únicos que han perdido al menos un tren.
-                    </p>
-                    <div class="analytics-chart">
-                        <canvas id="analyticsSaturationChart"></canvas>
-                    </div>
-                </div>
-
-                <div class="analytics-card">
-                    <h3 class="text-lg font-bold text-white mb-2">
-                        Evolución del tiempo de espera
-                    </h3>
-                    <p class="text-sm text-slate-400 mb-4">
-                        Promedio acumulado de espera en los andenes.
-                    </p>
-                    <div class="analytics-chart">
-                        <canvas id="analyticsWaitChart"></canvas>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- PARÁMETROS UTILIZADOS -->
-        <div class="analytics-card">
-            <h3 class="text-lg font-bold text-cyan-300 mb-4">
-                Parámetros utilizados en la ejecución
-            </h3>
-
-            <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-5">
-
-                <div>
-                    <p class="stat-label">Tiempo medio entre llegadas</p>
-                    <p id="a-param-arrival" class="text-2xl font-bold text-emerald-300">--</p>
-                </div>
-                <div>
-                    <p class="stat-label">Tasa de llegada λ</p>
-                    <p id="a-lambda-rate" class="text-2xl font-bold text-emerald-300">--</p>
-                </div>
-
-                <div>
-                    <p class="stat-label">Moda de validación triangular</p>
-                    <p id="a-param-turnstile" class="text-2xl font-bold text-amber-300">--</p>
-                </div>
-
-                <div>
-                    <p class="stat-label">Headway</p>
-                    <p id="a-param-headway" class="text-2xl font-bold text-blue-300">--</p>
-                </div>
-
-                <div>
-                    <p class="stat-label">Tiempo de parada</p>
-                    <p id="a-param-dwell" class="text-2xl font-bold text-purple-300">--</p>
-                </div>
-
-                <div>
-                    <p class="stat-label">Capacidad supuesta por tren</p>
-                    <p id="a-param-capacity" class="text-2xl font-bold text-fuchsia-300">--</p>
-                </div>
-                <div>
-                    <p class="stat-label">Capacidad teórica de torniquetes</p>
-                    <p id="a-turnstile-rate" class="text-2xl font-bold text-amber-300">--</p>
-                </div>
-                <div>
-                    <p class="stat-label">Aceleración visual</p>
-                    <p id="a-param-speed" class="text-2xl font-bold text-white">--</p>
-                </div>
-
-            </div>
-        </div>
-
-        <section class="analytics-card space-y-4">
+    <!-- PANTALLA COMPLETA DE RESULTADOS -->
+    <section id="analytics-page">
+        <header class="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 px-6 py-5 bg-slate-900 border-b border-slate-700 shadow-xl">
             <div>
-                <h3 class="text-lg font-bold text-cyan-300">Comparación de escenarios</h3>
-                <p class="text-sm text-slate-400">Ejecute una simulación, guárdela como escenario A, cambie los parámetros, reinicie y ejecute otra simulación para guardarla como escenario B.</p>
+                <p class="text-sm uppercase tracking-widest text-cyan-400 font-bold">
+                    DIGITAL TWIN · VILLA ZAITA
+                </p>
+                <h2 class="text-2xl md:text-3xl font-bold text-white">
+                    Resultados de la simulación
+                </h2>
+                <p id="analytics-status" class="text-sm text-slate-400 mt-1">
+                    Resumen de la hora pico
+                </p>
             </div>
-            <div class="flex flex-wrap gap-3">
-                <button id="save-scenario-a" class="px-4 py-2 rounded-lg bg-indigo-700 hover:bg-indigo-600 text-white text-sm font-semibold">Guardar resultado como A</button>
-                <button id="save-scenario-b" class="px-4 py-2 rounded-lg bg-fuchsia-700 hover:bg-fuchsia-600 text-white text-sm font-semibold">Guardar resultado como B</button>
-            </div>
-            <p id="scenario-save-status" class="text-xs text-slate-400">Aún no se han guardado escenarios.</p>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm text-left">
-                    <thead class="text-slate-300 border-b border-slate-600">
-                        <tr><th class="py-2 pr-4">Indicador</th><th class="py-2 pr-4">Escenario A</th><th class="py-2 pr-4">Escenario B</th><th class="py-2">Diferencia B − A</th></tr>
-                    </thead>
-                    <tbody id="scenario-comparison-body" class="text-slate-200">
-                        <tr><td colspan="4" class="py-3 text-slate-400">Guarde dos ejecuciones para comparar.</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
+            <button id="btn-back-sim" class="px-5 py-3 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold">
+                ← Volver a simulación
+            </button>
+        </header>
 
-        <p class="text-center text-xs text-slate-500 pb-6">
-            Los resultados dependen de los parámetros y de la variabilidad aleatoria del modelo. Los valores de capacidad del tren y de validación deben contrastarse con datos reales antes de formular recomendaciones operativas.
-        </p>
+        <main class="max-w-screen-2xl mx-auto p-5 md:p-8 space-y-8">
+            <!-- INDICADORES PRINCIPALES -->
+            <div>
+                <h3 class="text-lg font-bold text-cyan-300 mb-4">Indicadores generales</h3>
+                <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <div class="analytics-card">
+                        <p class="stat-label">Hora que se detuvo la simulación</p>
+                        <p id="a-time" class="text-3xl font-bold text-white font-mono">06:30:00</p>
+                    </div>
+                    <div class="analytics-card">
+                        <p class="stat-label">Ingresos</p>
+                        <p id="a-arrivals" class="text-4xl font-bold text-emerald-400">0</p>
+                        <p class="text-xs text-slate-400">Pasajeros ingresados</p>
+                    </div>
+                    <div class="analytics-card">
+                        <p class="stat-label">Abordajes</p>
+                        <p id="a-boarded" class="text-4xl font-bold text-indigo-400">0</p>
+                        <p class="text-xs text-slate-400">Pasajeros que abordaron</p>
+                    </div>
+                    <div class="analytics-card">
+                        <p class="stat-label">Pasajeros rezagados</p>
+                        <p id="a-late" class="text-4xl font-bold text-rose-400">0</p>
+                        <p class="text-xs text-slate-400">Pasajeros que esperan otro tren</p>
+                    </div>
+                    <div class="analytics-card">
+                        <p class="stat-label">Porcentaje de rezagados</p>
+                        <p id="a-percent" class="text-4xl font-bold text-rose-300">0.0%</p>
+                    </div>
+                    <div class="analytics-card">
+                        <p class="stat-label">Fila de torniquetes</p>
+                        <p id="a-turnstile" class="text-4xl font-bold text-amber-300">0</p>
+                    </div>
+                    <div class="analytics-card">
+                        <p class="stat-label">Personas en andenes</p>
+                        <p id="a-platform" class="text-4xl font-bold text-blue-300">0</p>
+                    </div>
+                    <div class="analytics-card">
+                        <p class="stat-label">Tiempo promedio de espera</p>
+                        <p id="a-wait" class="text-4xl font-bold text-cyan-300">0.0 s</p>
+                    </div>
+                </div>
+            </div>
 
-    </main>
-</section>
+            <!-- TIEMPOS DE ESPERA -->
+            <div>
+                <h3 class="text-lg font-bold text-cyan-300 mb-4">Análisis de tiempos de espera</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="analytics-card">
+                        <p class="stat-label">Último tiempo registrado</p>
+                        <p id="a-last" class="text-3xl font-bold text-indigo-300">--</p>
+                    </div>
+                    <div class="analytics-card">
+                        <p class="stat-label">Tiempo mínimo</p>
+                        <p id="a-min" class="text-3xl font-bold text-emerald-300">--</p>
+                    </div>
+                    <div class="analytics-card">
+                        <p class="stat-label">Tiempo máximo</p>
+                        <p id="a-max" class="text-3xl font-bold text-amber-300">--</p>
+                    </div>
+                    <div class="analytics-card">
+                        <p class="stat-label">Total de esperas registradas</p>
+                        <p id="a-wait-count" class="text-3xl font-bold text-cyan-300">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRÁFICAS -->
+            <div>
+                <h3 class="text-lg font-bold text-cyan-300 mb-4">Comportamiento de la simulación</h3>
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    <div class="analytics-card">
+                        <h3 class="text-lg font-bold text-white mb-2">Histórico de saturación</h3>
+                        <p class="text-sm text-slate-400 mb-4">Porcentaje acumulado de pasajeros rezagados.</p>
+                        <div class="analytics-chart">
+                            <canvas id="analyticsSaturationChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="analytics-card">
+                        <h3 class="text-lg font-bold text-white mb-2">Evolución del tiempo de espera</h3>
+                        <p class="text-sm text-slate-400 mb-4">Promedio acumulado de espera en los andenes.</p>
+                        <div class="analytics-chart">
+                            <canvas id="analyticsWaitChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PARÁMETROS UTILIZADOS -->
+            <div class="analytics-card">
+                <h3 class="text-lg font-bold text-cyan-300 mb-4">Parámetros utilizados en la ejecución</h3>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-5">
+                    <div>
+                        <p class="stat-label">Llegada promedio (1/λ)</p>
+                        <p id="a-param-arrival" class="text-2xl font-bold text-emerald-300">--</p>
+                    </div>
+                    <div>
+                        <p class="stat-label">Validación (1/μ)</p>
+                        <p id="a-param-turnstile" class="text-2xl font-bold text-amber-300">--</p>
+                    </div>
+                    <div>
+                        <p class="stat-label">Headway</p>
+                        <p id="a-param-headway" class="text-2xl font-bold text-blue-300">--</p>
+                    </div>
+                    <div>
+                        <p class="stat-label">Tiempo de parada</p>
+                        <p id="a-param-dwell" class="text-2xl font-bold text-purple-300">--</p>
+                    </div>
+                    <div>
+                        <p class="stat-label">Aceleración visual</p>
+                        <p id="a-param-speed" class="text-2xl font-bold text-white">--</p>
+                    </div>
+                    <div>
+                        <p class="stat-label">Torniquetes de entrada activos</p>
+                        <p id="a-param-active-ts" class="text-2xl font-bold text-indigo-300">--</p>
+                    </div>
+                    <div>
+                        <p class="stat-label">Capacidad supuesta por tren</p>
+                        <p id="a-param-train-capacity" class="text-2xl font-bold text-fuchsia-300">--</p>
+                    </div>
+                    <div>
+                        <p class="stat-label">Tasa de llegada (λ)</p>
+                        <p id="a-param-lambda" class="text-2xl font-bold text-emerald-300">--</p>
+                    </div>
+                    <div>
+                        <p class="stat-label">Capacidad teórica de torniquetes</p>
+                        <p id="a-param-ts-capacity" class="text-2xl font-bold text-amber-300">--</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="analytics-card">
+                <h3 class="text-lg font-bold text-cyan-300 mb-2">Comparación de escenarios</h3>
+                <p class="text-sm text-slate-400 mb-4">Guarda una ejecución como escenario A, modifica los parámetros, reinicia y ejecuta otra simulación para guardarla como escenario B.</p>
+                <div class="flex flex-wrap gap-3 mb-3">
+                    <button id="btn-save-scenario-a" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold">Guardar resultado como A</button>
+                    <button id="btn-save-scenario-b" class="px-4 py-2 rounded-lg bg-fuchsia-700 hover:bg-fuchsia-600 text-white text-sm font-bold">Guardar resultado como B</button>
+                </div>
+                <p id="scenario-status" class="text-xs text-slate-400 mb-4">Aún no se han guardado escenarios.</p>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-slate-300 border-b border-slate-600">
+                            <tr><th class="py-2 pr-4">Indicador</th><th class="py-2 px-3">Escenario A</th><th class="py-2 px-3">Escenario B</th><th class="py-2 px-3">Diferencia B − A</th></tr>
+                        </thead>
+                        <tbody id="scenario-comparison-body" class="divide-y divide-slate-700">
+                            <tr><td colspan="4" class="py-3 text-slate-500">Guarda los resultados de A y B para compararlos.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <p class="text-center text-xs text-slate-500 pb-6">Los resultados dependen de los parámetros y de la variabilidad aleatoria del modelo. La capacidad del tren es un supuesto editable y debe contrastarse con datos reales antes de formular recomendaciones operativas.</p>
+        </main>
+    </section>
 
     <script>
         // ==========================================
@@ -519,32 +460,27 @@
         }
 
         /**
-         * Genera un tiempo de servicio con distribución triangular.
-         * Parámetros iniciales sugeridos: mínimo 2 s, moda 3 s, máximo 6 s.
-         * Es un supuesto mientras no existan observaciones reales.
+         * Genera un tiempo basado en una Distribución Lognormal mediante Box-Muller.
+         * Justificación: Ajusta a los datos empíricos de MPSA, donde la mayoría tarda 3s,
+         * pero existen casos atípicos (adultos mayores, falta de saldo) que tardan hasta 8s.
          */
-        function getTriangularTime(minVal = 2, modeVal = 3, maxVal = 6) {
-            const u = Math.random();
-            const split = (modeVal - minVal) / (maxVal - minVal);
-            if (u < split) {
-                return minVal + Math.sqrt(u * (maxVal - minVal) * (modeVal - minVal));
-            }
-            return maxVal - Math.sqrt((1 - u) * (maxVal - minVal) * (maxVal - modeVal));
+        function getLognormalTime(meanVal, stdDev) {
+            // 1. Transformación de Box-Muller para Normal Estandar (Z)
+            let u1 = Math.max(Math.random(), 0.0001); // Evitar log(0)
+            let u2 = Math.random();
+            let z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+            
+            // 2. Parámetros Lognormales (mu y sigma a partir de media y varianza)
+            let varVal = stdDev * stdDev;
+            let mu = Math.log(meanVal) - 0.5 * Math.log(1 + (varVal / (meanVal * meanVal)));
+            let sigma = Math.sqrt(Math.log(1 + (varVal / (meanVal * meanVal))));
+            
+            // 3. Resultado Lognormal
+            let time = Math.exp(mu + sigma * z0);
+            
+            // 4. Clamping operativo: Ningún pasajero tarda menos de 1.5s ni más de 9s (Fallo total)
+            return Math.max(1.5, Math.min(time, 9.0));
         }
-
-        function getServiceMean() {
-            const mode = parseFloat(paramTurnstile.value);
-            return (2 + mode + 6) / 3;
-        }
-
-        function getArrivalRatePerMinute() {
-            return 60 / parseFloat(paramArrival.value);
-        }
-
-        function getTurnstileCapacityPerMinute() {
-            return turnstilesIn.length * 60 / getServiceMean();
-        }
-
 
         // ==========================================
         // UI BINDINGS & ESTADOS
@@ -563,29 +499,60 @@
         
         const paramArrival = document.getElementById('param-arrival');
         const paramTurnstile = document.getElementById('param-turnstile');
-        const paramCapacity = document.getElementById('param-capacity');
+        const paramActiveTs = document.getElementById('param-active-ts');
+        const paramTrainCapacity = document.getElementById('param-train-capacity');
         const paramHeadway = document.getElementById('param-headway');
         const paramDwell = document.getElementById('param-dwell');
         const paramSpeed = document.getElementById('param-speed');
         
-        paramArrival.addEventListener('input', e => {
-            document.getElementById('val-arrival').innerText = parseFloat(e.target.value).toFixed(1) + 's';
-            updateRateSummary();
+        // Función para actualizar los cálculos de Teoría de Colas (Recomendación Profesora)
+        function updateMathRates() {
+            // Se calcula cuántos entran y salen por MINUTO (60 segundos)
+            let lambdaRate = (60 / parseFloat(paramArrival.value)).toFixed(1);
+            let muRate = (60 / parseFloat(paramTurnstile.value)).toFixed(1);
+            let c = parseInt(paramActiveTs.value);
+            let capacity = (muRate * c).toFixed(1);
+            
+            document.getElementById('ui-lambda-rate').innerText = `${lambdaRate} pax/min`;
+            document.getElementById('ui-mu-rate').innerText = `${muRate} pax/min`;
+            document.getElementById('ui-capacity-rate').innerText = `${capacity} pax/min`;
+            
+            // Si la demanda supera la capacidad de los torniquetes, la letra se pone roja para alertar colapso
+            if (parseFloat(lambdaRate) >= parseFloat(capacity)) {
+                document.getElementById('ui-capacity-rate').classList.replace('text-indigo-400', 'text-rose-500');
+                document.getElementById('ui-capacity-rate').classList.add('animate-pulse');
+            } else {
+                document.getElementById('ui-capacity-rate').classList.replace('text-rose-500', 'text-indigo-400');
+                document.getElementById('ui-capacity-rate').classList.remove('animate-pulse');
+            }
+        }
+
+        paramArrival.addEventListener('input', e => { 
+            document.getElementById('val-arrival').innerText = parseFloat(e.target.value).toFixed(1) + 's'; 
+            updateMathRates();
         });
-        paramTurnstile.addEventListener('input', e => {
-            document.getElementById('val-turnstile').innerText = parseFloat(e.target.value).toFixed(1) + 's';
-            updateRateSummary();
+        
+        paramTurnstile.addEventListener('input', e => { 
+            document.getElementById('val-turnstile').innerText = parseFloat(e.target.value).toFixed(1) + 's'; 
+            updateMathRates();
         });
-        paramCapacity.addEventListener('input', e => {
-            document.getElementById('val-capacity').innerText = e.target.value + ' pasajeros';
+
+        paramActiveTs.addEventListener('input', e => { 
+            document.getElementById('val-active-ts').innerText = e.target.value; 
+            updateMathRates();
+        });
+        
+        paramTrainCapacity.addEventListener('input', e => {
+            document.getElementById('val-train-capacity').innerText = e.target.value + ' pasajeros';
         });
         paramHeadway.addEventListener('input', e => document.getElementById('val-headway').innerText = e.target.value + 's');
         paramDwell.addEventListener('input', e => document.getElementById('val-dwell').innerText = e.target.value + 's');
         paramSpeed.addEventListener('input', e => document.getElementById('val-speed').innerText = 'x' + e.target.value);
         
-        let isPaused = false;
-        const savedScenarios = { A: null, B: null };
+        // Llamada inicial para establecer valores de tasas en el panel
+        updateMathRates();
         
+        let isPaused = false;
         const playButton = document.getElementById('btn-play');
         
         playButton.addEventListener('click', () => {
@@ -597,34 +564,30 @@
         document.getElementById('btn-pause').addEventListener('click', () => {
             isPaused = true;
         });
+
         document.getElementById('btn-reset').addEventListener('click', () => {
             resetSimulation();
             isPaused = false;
         });
 
-       document.getElementById('btn-finish').addEventListener('click', () => {
-    isPaused = true;
-    simulationFinished = true;
+        document.getElementById('btn-finish').addEventListener('click', () => {
+            isPaused = true;
+            simulationFinished = true;
 
-    playButton.disabled = true;
-    playButton.textContent = '✓ Finalizada';
-    playButton.classList.add('opacity-50', 'cursor-not-allowed');
+            playButton.disabled = true;
+            playButton.textContent = '✓ Finalizada';
+            playButton.classList.add('opacity-50', 'cursor-not-allowed');
 
-    showAnalyticsPage(true);
-       });
+            showAnalyticsPage(true);
+        });
 
         // BOTÓN PARA REGRESAR A LA SIMULACIÓN
         document.getElementById('btn-back-sim').addEventListener('click', () => {
             hideAnalyticsPage();
         });
 
-        document.getElementById('save-scenario-a').addEventListener('click', () => saveScenario('A'));
-        document.getElementById('save-scenario-b').addEventListener('click', () => saveScenario('B'));
-
-
         // Ayuda de controles: aparece abajo y centrada al mover/tocar,
         // y se oculta tras cinco segundos sin actividad. El cursor nunca se oculta.
-        
         let instructionsHideTimer = null;
         function showControlInstructions() {
             const instructions = document.getElementById('instructions');
@@ -669,24 +632,23 @@
         let analyticsSaturationChart = null;
         let analyticsWaitChart = null;
         let waitHistory = [];
+        let scenarioA = null;
+        let scenarioB = null;
         
-        let stats = {
-            arrivals: 0, departures: 0, boarded: 0,
-            missedBoardings: 0, uniqueDelayedIds: new Set(),
-            platformWaitTotal: 0, platformWaitCount: 0,
-            platformWaitMin: Infinity, platformWaitMax: 0, platformWaitLast: null
-        };
+        let stats = { arrivals: 0, departures: 0, boarded: 0, rezagados: 0, missedTrainEvents: 0, waitingTracker: new Set(), platformWaitTotal: 0, platformWaitCount: 0, platformWaitMin: Infinity, platformWaitMax: 0, platformWaitLast: null };
 
         // Parámetro de advertencia de puertas
         const DOOR_WARNING = 3;
-        const INPUT_TURNSTILE_COUNT = 6; // Configuración del modelo; validar con datos de campo.
 
         // Caché de Geometrías y Materiales (Optimización)
         const torsoGeo = new THREE.CylinderGeometry(1.5, 1.5, 5, 8);
         const headGeo = new THREE.SphereGeometry(1.5, 8, 8);
         const turnstileGeo = new THREE.BoxGeometry(8, 12, 12);
+        
         const turnstileMatIn = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.3 }); // Pizarra (Entrada)
+        const turnstileMatOff = new THREE.MeshStandardMaterial({ color: 0x991b1b, transparent: true, opacity: 0.6 }); // Fuera de servicio
         const turnstileMatOut = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.3 }); // Gris (Salida)
+        
         const activeMat = new THREE.MeshStandardMaterial({ color: 0x10b981, emissive: 0x10b981, emissiveIntensity: 0.2 }); // Verde Aprobado
         const errorMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b }); // Ambar (Demora)
         const trainMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.2 }); // Blanco Tren
@@ -698,79 +660,6 @@
             resetSimulation();
             animate();
         };
-
-        function updateRateSummary() {
-            const arrivalRate = getArrivalRatePerMinute();
-            const serviceMean = getServiceMean();
-            const totalServiceCapacity = turnstilesIn.length
-                ? getTurnstileCapacityPerMinute()
-                : (6 * 60 / serviceMean);
-            const lambdaEl = document.getElementById('ui-lambda-rate');
-            const serviceEl = document.getElementById('ui-service-mean');
-            const capacityEl = document.getElementById('ui-turnstile-capacity');
-            if (lambdaEl) lambdaEl.textContent = `${arrivalRate.toFixed(1)} pasajeros/min`;
-            if (serviceEl) serviceEl.textContent = `${serviceMean.toFixed(2)} s`;
-            if (capacityEl) capacityEl.textContent = `${totalServiceCapacity.toFixed(1)} pasajeros/min`;
-        }
-
-        function getCurrentPendingPassengers() {
-            return passengers.filter(p => !p.isOutbound && p.state !== 'DONE').length;
-        }
-
-        function getCurrentConservationBalance() {
-            return stats.arrivals - stats.boarded - getCurrentPendingPassengers();
-        }
-
-        function saveScenario(slot) {
-            const avgWait = stats.platformWaitCount
-                ? stats.platformWaitTotal / stats.platformWaitCount : 0;
-            savedScenarios[slot] = {
-                arrivals: stats.arrivals,
-                boarded: stats.boarded,
-                pending: getCurrentPendingPassengers(),
-                delayedUnique: stats.uniqueDelayedIds.size,
-                missedEvents: stats.missedBoardings,
-                delayedPct: stats.arrivals ? stats.uniqueDelayedIds.size / stats.arrivals * 100 : 0,
-                avgWait,
-                arrivalMean: parseFloat(paramArrival.value),
-                serviceMode: parseFloat(paramTurnstile.value),
-                headway: parseFloat(paramHeadway.value),
-                dwell: parseFloat(paramDwell.value),
-                capacity: parseInt(paramCapacity.value, 10),
-                turnstiles: turnstilesIn.length
-            };
-            renderScenarioComparison();
-            document.getElementById('scenario-save-status').textContent =
-                `Escenario ${slot} guardado: ${savedScenarios[slot].arrivals} ingresos, ${savedScenarios[slot].boarded} abordajes, ${savedScenarios[slot].pending} pendientes.`;
-        }
-
-        function renderScenarioComparison() {
-            const tbody = document.getElementById('scenario-comparison-body');
-            if (!tbody) return;
-            const a = savedScenarios.A, b = savedScenarios.B;
-            if (!a || !b) {
-                tbody.innerHTML = '<tr><td colspan="4" class="py-3 text-slate-400">Guarde los escenarios A y B para ver la comparación.</td></tr>';
-                return;
-            }
-            const rows = [
-                ['Ingresos', a.arrivals, b.arrivals],
-                ['Abordajes', a.boarded, b.boarded],
-                ['Pendientes al finalizar', a.pending, b.pending],
-                ['Personas únicas que perdieron un tren', a.delayedUnique, b.delayedUnique],
-                ['Eventos de tren perdido', a.missedEvents, b.missedEvents],
-                ['Porcentaje de personas retrasadas', `${a.delayedPct.toFixed(1)}%`, `${b.delayedPct.toFixed(1)}%`],
-                ['Espera promedio en andén (s)', a.avgWait.toFixed(1), b.avgWait.toFixed(1)]
-            ];
-            tbody.innerHTML = rows.map(r => {
-                const av = typeof r[1] === 'number' ? r[1] : parseFloat(r[1]);
-                const bv = typeof r[2] === 'number' ? r[2] : parseFloat(r[2]);
-                const diff = Number.isFinite(av) && Number.isFinite(bv) ? (bv - av).toFixed(1) : '—';
-                return `<tr class="border-b border-slate-700/60">
-                    <td class="py-2 pr-4">${r[0]}</td><td class="py-2 pr-4">${r[1]}</td>
-                    <td class="py-2 pr-4">${r[2]}</td><td class="py-2">${diff}</td>
-                </tr>`;
-            }).join('');
-        }
 
         // ==========================================
         // SETUP GRÁFICA HISTÓRICA (CHART.JS)
@@ -886,96 +775,6 @@
             }
         }
 
-        function updateAnalyticsDashboard() {
-            const totalSeconds = baseTime + simTimeElapsed;
-            const hrs = Math.floor(totalSeconds / 3600);
-            const mins = Math.floor((totalSeconds % 3600) / 60);
-            const secs = Math.floor(totalSeconds % 60);
-            const timeText = `${hrs.toString().padStart(2,'0')}:${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
-
-            const avg = stats.platformWaitCount > 0 ? stats.platformWaitTotal / stats.platformWaitCount : 0;
-            const pending = getCurrentPendingPassengers();
-            const balance = stats.arrivals - stats.boarded - pending;
-            const pct = stats.arrivals > 0 ? (stats.uniqueDelayedIds.size / stats.arrivals) * 100 : 0;
-            const turnstileTotal = turnstilesIn.reduce((acc, t) => acc + t.queue.length + (t.processing ? 1 : 0), 0);
-            const platformTotal = passengers.filter(p =>
-                !p.isOutbound && ['WAITING','WALKING_PLATFORM','CLIMBING','WALKING_STAIRS_BASE','BOARDING'].includes(p.state)
-            ).length;
-
-            const values = {
-                'a-time': timeText, 'a-arrivals': stats.arrivals, 'a-boarded': stats.boarded,
-                'a-late': stats.uniqueDelayedIds.size, 'a-percent': `${pct.toFixed(1)}%`,
-                'a-missed-events': stats.missedBoardings, 'a-pending': pending, 'a-balance': balance,
-                'a-wait': `${avg.toFixed(1)} s`, 'a-turnstile': turnstileTotal, 'a-platform': platformTotal,
-                'a-last': stats.platformWaitLast === null ? '--' : `${stats.platformWaitLast.toFixed(1)} s`,
-                'a-min': stats.platformWaitCount > 0 ? `${stats.platformWaitMin.toFixed(1)} s` : '--',
-                'a-max': stats.platformWaitCount > 0 ? `${stats.platformWaitMax.toFixed(1)} s` : '--',
-                'a-wait-count': stats.platformWaitCount,
-                'a-param-arrival': `${parseFloat(paramArrival.value).toFixed(1)} s`,
-                'a-lambda-rate': `${getArrivalRatePerMinute().toFixed(1)} pax/min`,
-                'a-turnstile-rate': `${getTurnstileCapacityPerMinute().toFixed(1)} pax/min`,
-                'a-param-turnstile': `Moda ${parseFloat(paramTurnstile.value).toFixed(1)} s (media ${getServiceMean().toFixed(2)} s)`,
-                'a-param-headway': `${paramHeadway.value} s`,
-                'a-param-dwell': `${paramDwell.value} s`,
-                'a-param-capacity': `${paramCapacity.value} pasajeros`,
-                'a-param-speed': `x${paramSpeed.value}`
-            };
-            Object.entries(values).forEach(([id, value]) => {
-                const el = document.getElementById(id);
-                if (el) el.textContent = value;
-            });
-            updateRateSummary();
-        }
-
-        function showAnalyticsPage(finalize = false) {
-            if (finalize) {
-                isPaused = true;
-                const totalSeconds = baseTime + simTimeElapsed;
-                const hrs = Math.floor(totalSeconds / 3600);
-                const mins = Math.floor((totalSeconds % 3600) / 60);
-                const secs = Math.floor(totalSeconds % 60);
-                const finalLabel = `${hrs.toString().padStart(2,'0')}:${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
-                if (historyChart) {
-                    const labels = historyChart.data.labels;
-                    if (labels[labels.length - 1] !== finalLabel) {
-                        const finalPct = stats.arrivals > 0 ? (stats.uniqueDelayedIds.size / stats.arrivals) * 100 : 0;
-                        const finalWait = stats.platformWaitCount > 0 ? stats.platformWaitTotal / stats.platformWaitCount : 0;
-                        historyChart.data.labels.push(finalLabel);
-                        historyChart.data.datasets[0].data.push(Number(finalPct.toFixed(2)));
-                        historyChart.data.datasets[1].data.push(2);
-                        waitHistory.push(Number(finalWait.toFixed(2)));
-                        if (historyChart.data.labels.length > 60) {
-                            historyChart.data.labels.shift();
-                            historyChart.data.datasets.forEach(dataset => dataset.data.shift());
-                            waitHistory.shift();
-                        }
-                        historyChart.update();
-                    }
-                }
-            }
-            updateAnalyticsDashboard();
-            refreshAnalyticsCharts();
-            document.getElementById('analytics-status').textContent = finalize
-                ? 'Simulación finalizada · resultados congelados'
-                : (isPaused ? 'Simulación en pausa · indicadores actuales' : 'Simulación en ejecución · indicadores en tiempo real');
-           document.getElementById('analytics-page').classList.add('active');
-            
-            // Ajustar las gráficas después de mostrar la pantalla
-            requestAnimationFrame(() => {
-                if (analyticsSaturationChart) {
-        analyticsSaturationChart.resize();
-                }
-                
-                if (analyticsWaitChart) {
-                    analyticsWaitChart.resize();
-                }
-            });
-        }
-
-        function hideAnalyticsPage() {
-            document.getElementById('analytics-page').classList.remove('active');
-        }
-
         // ==========================================
         // SETUP RENDERIZADO 3D
         // ==========================================
@@ -1000,6 +799,7 @@
             controls.maxPolarAngle = Math.PI / 2 - 0.05; // No ver debajo del suelo
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
+            
             // Botón izquierdo para rotar; botón/rueda central para hacer zoom.
             controls.mouseButtons = {
                 LEFT: THREE.MOUSE.ROTATE,
@@ -1117,19 +917,16 @@
             playButton.disabled = false;
             playButton.textContent = '▶ Play';
             playButton.classList.remove('opacity-50', 'cursor-not-allowed');
-            stats = {
-                arrivals: 0, departures: 0, boarded: 0,
-                missedBoardings: 0, uniqueDelayedIds: new Set(),
-                platformWaitTotal: 0, platformWaitCount: 0,
-                platformWaitMin: Infinity, platformWaitMax: 0, platformWaitLast: null
-            };
             
-            // Primera llegada generada con distribución exponencial
+            stats = { arrivals: 0, departures: 0, boarded: 0, rezagados: 0, missedTrainEvents: 0, waitingTracker: new Set(), platformWaitTotal: 0, platformWaitCount: 0, platformWaitMin: Infinity, platformWaitMax: 0, platformWaitLast: null };
+            
+            // Disparador inicial Lognormal/Exponencial
             nextPassengerArrivalTime = getExponentialTime(parseFloat(paramArrival.value));
 
             // Limpiar gráfica histórica
             lastChartUpdateTime = 0;
             waitHistory = [];
+            
             if (historyChart) {
                 historyChart.data.labels = [];
                 historyChart.data.datasets[0].data = [];
@@ -1158,19 +955,19 @@
             trains.forEach(t => scene.remove(t.mesh));
             trains = [];
 
-            // Recursos: Torniquetes de ENTRADA (Mapeados a la derecha del Layout)
-            for(let i=0; i<INPUT_TURNSTILE_COUNT; i++) {
+            // AHORA TENEMOS 9 TORNIQUETES DE ENTRADA EN EL 3D
+            for(let i=0; i<9; i++) {
                 let mesh = new THREE.Mesh(turnstileGeo, turnstileMatIn);
-                mesh.position.set(80 + (i*25), 6, 280);
+                mesh.position.set(150 + (i*25), 6, 280);
                 mesh.castShadow = true;
                 scene.add(mesh);
                 turnstilesIn.push({ id: `IN_${i}`, pos: mesh.position, queue: [], processing: null, timer: 0, mesh: mesh });
             }
 
             // Recursos: Torniquetes de SALIDA (Mapeados a la izquierda)
-            for(let i=0; i<6; i++) {
+            for(let i=0; i<9; i++) {
                 let mesh = new THREE.Mesh(turnstileGeo, turnstileMatOut);
-                mesh.position.set(-205 + (i*25), 6, 280);
+                mesh.position.set(-350 + (i*25), 6, 280);
                 mesh.castShadow = true;
                 scene.add(mesh);
                 turnstilesOut.push({ id: `OUT_${i}`, pos: mesh.position, queue: [], processing: null, timer: 0, mesh: mesh });
@@ -1190,12 +987,10 @@
                 this.id = id; 
                 this.zPos = zPos;
                 this.state = 'AWAY'; // Máquina de estados: AWAY, ARRIVING, BOARDING, DEPARTING
-                this.capacity = parseInt(paramCapacity.value, 10);
-                this.boardedThisStop = 0;
-                this.stopSequence = 0;
                 
                 // Headway fijo (Determinístico)
                 this.timer = parseFloat(paramHeadway.value) + (id === 2 ? parseFloat(paramHeadway.value)/2 : 0);
+                this.boardedThisStop = 0;
                 
                 this.group = new THREE.Group();
                 this.group.visible = false; 
@@ -1262,10 +1057,8 @@
                     if (this.group.position.x <= 0) {
                         this.group.position.x = 0;
                         this.state = 'BOARDING';
-                        this.timer = parseFloat(paramDwell.value); // Tiempo de parada ajustable
+                        this.timer = parseFloat(paramDwell.value); // Dwell Time ajustable desde UI
                         this.boardedThisStop = 0;
-                        this.capacity = parseInt(paramCapacity.value, 10);
-                        this.stopSequence++;
                         
                         // Generar pasajeros de desembarque (Eventos exógenos)
                         let numAlighting = Math.floor(Math.random() * 15) + 10;
@@ -1278,25 +1071,20 @@
                 }
                 else if (this.state === 'BOARDING') {
                     this.timer -= dt;
-                    // Al cerrar puertas, quienes no completaron el abordaje permanecen en la estación.
-                        if (this.timer <= 0) {
-                            this.state = 'DEPARTING';
-                            passengers.forEach(p => {
-                                if (p.isOutbound || p.platform !== this.id || p.state === 'DONE') return;
-                                const eligible = ['WALKING_STAIRS_BASE','CLIMBING','WALKING_PLATFORM','WAITING','BOARDING'];
-                                if (!eligible.includes(p.state)) return;
-
-                                if (p.lastMissedStop !== this.stopSequence) {
-                                    stats.missedBoardings++;
-                                    stats.uniqueDelayedIds.add(p.id);
-                                    p.lastMissedStop = this.stopSequence;
+                    // Evaluar Rezagados (Meta 1-2%) al momento del cierre de puertas
+                    if (this.timer <= 0) {
+                        this.state = 'DEPARTING';
+                        
+                        passengers.forEach(p => {
+                            if (!p.isOutbound && p.platform === this.id && (p.state === 'WAITING' || p.state === 'WALKING_PLATFORM')) {
+                                stats.missedTrainEvents++;
+                                if (!stats.waitingTracker.has(p.id)) {
+                                    stats.rezagados++;
+                                    stats.waitingTracker.add(p.id); // Personas únicas que perdieron al menos un tren
                                 }
-                                if (p.state === 'BOARDING') {
-                                    p.state = 'WAITING';
-                                    p.target.set(p.mesh.position.x, 40, this.zPos);
-                                }
-                            });
-                        }
+                            }
+                        });
+                    }
                 }
                 else if (this.state === 'DEPARTING') {
                     // Maniobra terminal: sale por la misma vía hacia Albrook
@@ -1318,7 +1106,7 @@
                 this.speed = 45 + Math.random() * 25; 
                 this.platform = platformId;
                 this.platformArrivalTime = null; // Inicio del cronómetro de espera en el andén
-                this.lastMissedStop = null;
+                this.boardingReserved = false;
 
                 // Visuales
                 const color = isOutbound ? 0xfbbf24 : new THREE.Color(`hsl(${Math.random()*360}, 75%, 55%)`);
@@ -1347,7 +1135,7 @@
                     this.target.set(-350, 40, this.platform === 1 ? -160 : 160);
                 } else {
                     this.state = 'WALKING_TO_IN';
-                    this.mesh.position.set(250 + Math.random()*50, 0, 400); 
+                    this.mesh.position.set(200 + Math.random()*100, 0, 400); 
                     scene.add(this.mesh);
                     this.chooseTurnstile(turnstilesIn);
                 }
@@ -1355,8 +1143,12 @@
 
             // Enrutamiento Inteligente (Balanceo de Colas)
             chooseTurnstile(tsArray) {
-                let minQueueLen = Math.min(...tsArray.map(t => t.queue.length));
-                let bestOptions = tsArray.filter(t => t.queue.length === minQueueLen);
+                let activeCount = parseInt(paramActiveTs.value);
+                let availableTs = tsArray.slice(0, activeCount);
+                if(availableTs.length === 0) availableTs = tsArray;
+
+                let minQueueLen = Math.min(...availableTs.map(t => t.queue.length));
+                let bestOptions = availableTs.filter(t => t.queue.length === minQueueLen);
                 this.turnstile = bestOptions[Math.floor(Math.random() * bestOptions.length)];
                 
                 this.turnstile.queue.push(this.id);
@@ -1391,13 +1183,13 @@
                     this.mesh.position.add(dir.multiplyScalar(step));
                 }
                 
-                // Abordaje condicionado por tiempo disponible y capacidad del tren.
+                // Interrupción Dinámica: El tren está por cerrar puertas
                 if (!this.isOutbound && (this.state === 'WAITING' || this.state === 'WALKING_PLATFORM')) {
                     let myTrain = trains.find(t => t.id === this.platform);
-                    if (myTrain && myTrain.state === 'BOARDING' &&
-                        myTrain.timer > DOOR_WARNING &&
-                        myTrain.boardedThisStop < myTrain.capacity) {
+                    if (myTrain && myTrain.state === 'BOARDING' && myTrain.timer > DOOR_WARNING &&
+                        myTrain.boardedThisStop < parseInt(paramTrainCapacity.value) && !this.boardingReserved) {
                         myTrain.boardedThisStop++;
+                        this.boardingReserved = true;
                         this.state = 'BOARDING';
                         this.target.set(myTrain.group.position.x + (Math.random()*400 - 200), 40, myTrain.zPos);
                     }
@@ -1475,18 +1267,28 @@
                 
                 simTimeElapsed += dt;
 
-                // Procesar todas las llegadas ocurridas en este paso para no omitir eventos
-                // cuando se aumenta la aceleración de la simulación.
-                while (simTimeElapsed >= nextPassengerArrivalTime && nextPassengerArrivalTime <= SIM_DURATION) {
+                // 1. Spawner Estocástico de Pasajeros (Distribución Exponencial)
+                if (simTimeElapsed >= nextPassengerArrivalTime) {
                     passengers.push(new Passenger(false));
                     stats.arrivals++;
-                    nextPassengerArrivalTime += getExponentialTime(parseFloat(paramArrival.value));
+                    
+                    // Programar siguiente llegada
+                    let meanArrivalRate = parseFloat(paramArrival.value);
+                    nextPassengerArrivalTime = simTimeElapsed + getExponentialTime(meanArrivalRate);
                 }
 
                 // 2. Procesamiento Lógico en Torniquetes IN (Distribución Lognormal)
                 const meanTurnstile = parseFloat(paramTurnstile.value);
+                let activeCount = parseInt(paramActiveTs.value);
                 
-                turnstilesIn.forEach(t => {
+                turnstilesIn.forEach((t, index) => {
+                    // Control de daños: Si el torniquete está apagado, se pone rojo
+                    if (index >= activeCount) {
+                        t.mesh.material = turnstileMatOff;
+                    } else if (t.processing === null) {
+                        t.mesh.material = turnstileMatIn;
+                    }
+
                     t.queue.forEach(pid => {
                         let p = passengers.find(px => px.id === pid);
                         if(p && p.state === 'WALKING_TO_IN') p.updateQueueTarget();
@@ -1501,8 +1303,8 @@
                             p.state = 'PROCESSING';
                             p.mesh.position.set(t.pos.x, 0, t.pos.z); // Anclar al torniquete
                             
-                            // Distribución triangular: mínimo 2 s, moda ajustable (3 s inicial), máximo 6 s.
-                            t.timer = getTriangularTime(2, meanTurnstile, 6); 
+                            // APLICACIÓN LÓGICA ESTOCÁSTICA: Tiempo de validación Lognormal
+                            t.timer = getLognormalTime(meanTurnstile, 2.0); 
                             
                             // Cambio visual si el pasajero tarda más del promedio (Simulando error/demora)
                             t.mesh.material = (t.timer > meanTurnstile + 1.5) ? errorMat : activeMat;
@@ -1517,7 +1319,7 @@
                             t.processing.state = 'PROCESSED';
                             t.processing.advanceState();
                             t.processing = null;
-                            t.mesh.material = turnstileMatIn;
+                            t.mesh.material = (index >= activeCount) ? turnstileMatOff : turnstileMatIn;
                         }
                     }
                 });
@@ -1581,7 +1383,6 @@
                         'opacity-50',
                         'cursor-not-allowed'
                     );
-                    showAnalyticsPage(true);
                 }
             } // Fin de isPaused
 
@@ -1601,8 +1402,8 @@
             const labelsData = [
                 { id: 'lbl-anden1', pos: new THREE.Vector3(0, 60, -160) },
                 { id: 'lbl-anden2', pos: new THREE.Vector3(0, 60, 160) },
-                { id: 'lbl-in', pos: new THREE.Vector3(140, 25, 280) },
-                { id: 'lbl-out', pos: new THREE.Vector3(-140, 25, 280) }
+                { id: 'lbl-in', pos: new THREE.Vector3(250, 25, 280) },
+                { id: 'lbl-out', pos: new THREE.Vector3(-250, 25, 280) }
             ];
             
             labelsData.forEach(data => {
@@ -1635,50 +1436,263 @@
             let mins = Math.floor((totalSeconds % 3600) / 60);
             let secs = Math.floor(totalSeconds % 60);
             uiTime.innerText = `${hrs.toString().padStart(2,'0')}:${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+            
+            // LA ECUACIÓN DE CONSERVACIÓN REQUERIDA POR LA PROFESORA
+            let qTs = 0;
+            let qTrans = 0;
+            let qPlat = 0;
 
-            const pending = getCurrentPendingPassengers();
-            const delayedPct = stats.arrivals > 0 ? (stats.uniqueDelayedIds.size / stats.arrivals * 100) : 0;
+            passengers.forEach(p => {
+                if(!p.isOutbound) {
+                    if (['WALKING_TO_IN', 'PROCESSING'].includes(p.state)) {
+                        qTs++;
+                    } else if (['PROCESSED', 'WALKING_STAIRS_BASE', 'CLIMBING'].includes(p.state)) {
+                        qTrans++;
+                    } else if (['WALKING_PLATFORM', 'WAITING', 'BOARDING'].includes(p.state)) {
+                        qPlat++;
+                    }
+                }
+            });
+
             uiArrivals.innerText = stats.arrivals;
             uiBoarded.innerText = stats.boarded;
-            uiRezagados.innerText = stats.uniqueDelayedIds.size;
-            uiRezagadosPct.innerText = `${delayedPct.toFixed(1)}%`;
-            document.getElementById('ui-pending').innerText = pending;
+            uiTurnstileQueue.innerText = qTs;
+            document.getElementById('ui-transit').innerText = qTrans;
+            uiPlatformQueue.innerText = qPlat;
+            uiRezagados.innerText = stats.rezagados;
 
+            // Indicadores de tiempo de espera en andén (solo pasajeros que ya abordaron)
             const avgPlatformWait = stats.platformWaitCount > 0 ? stats.platformWaitTotal / stats.platformWaitCount : null;
             uiPlatformAvg.innerText = avgPlatformWait === null ? '0.0 s' : `${avgPlatformWait.toFixed(1)} s`;
             uiPlatformLast.innerText = stats.platformWaitLast === null ? '--' : `${stats.platformWaitLast.toFixed(1)} s`;
             uiPlatformMin.innerText = stats.platformWaitCount === 0 ? '--' : `${stats.platformWaitMin.toFixed(1)} s`;
             uiPlatformMax.innerText = stats.platformWaitCount === 0 ? '--' : `${stats.platformWaitMax.toFixed(1)} s`;
+            
+            // Cálculo del KPI
+            let rezPct = stats.arrivals > 0 ? ((stats.rezagados / stats.arrivals) * 100).toFixed(1) : 0;
+            uiRezagadosPct.innerText = `${rezPct}%`;
+            
+            // Pulso rojo si se excede la meta
+            const rezagadosPanel = uiRezagados.parentElement.parentElement;
+            if(parseFloat(rezPct) > 2.0) {
+                rezagadosPanel.classList.add('animate-pulse', 'border-rose-500');
+            } else {
+                rezagadosPanel.classList.remove('animate-pulse', 'border-rose-500');
+            }
 
-            const delayedPanel = uiRezagados.parentElement.parentElement;
-            if (delayedPct > 2.0) delayedPanel.classList.add('animate-pulse', 'border-rose-500');
-            else delayedPanel.classList.remove('animate-pulse', 'border-rose-500');
-
-            const turnstileTotal = turnstilesIn.reduce((acc, t) => acc + t.queue.length + (t.processing ? 1 : 0), 0);
-            uiTurnstileQueue.innerText = turnstileTotal;
-            const platformTotal = passengers.filter(p => !p.isOutbound &&
-                ['WAITING','WALKING_PLATFORM','CLIMBING','WALKING_STAIRS_BASE','BOARDING'].includes(p.state)).length;
-            uiPlatformQueue.innerText = platformTotal;
-            updateRateSummary();
-
+            // Actualizar Gráfica Histórica (Cada 15 segundos simulados para evitar sobrecarga)
             if (simTimeElapsed - lastChartUpdateTime > 15) {
                 lastChartUpdateTime = simTimeElapsed;
+                
                 let timeLabel = `${hrs.toString().padStart(2,'0')}:${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+                
                 if (historyChart) {
                     historyChart.data.labels.push(timeLabel);
-                    historyChart.data.datasets[0].data.push(Number(delayedPct.toFixed(2)));
-                    historyChart.data.datasets[1].data.push(2);
-                    const avgWait = stats.platformWaitCount > 0 ? stats.platformWaitTotal / stats.platformWaitCount : 0;
-                    waitHistory.push(Number(avgWait.toFixed(2)));
+                    historyChart.data.datasets[0].data.push(parseFloat(rezPct));
+                    
+                    const avgWaitSample = stats.platformWaitCount > 0
+                        ? stats.platformWaitTotal / stats.platformWaitCount
+                        : 0;
+                    waitHistory.push(Number(avgWaitSample.toFixed(2)));
+                    
+                    // Mantener ventana de los últimos 60 datos (Sliding Window de ~15 minutos simulados)
                     if (historyChart.data.labels.length > 60) {
                         historyChart.data.labels.shift();
-                        historyChart.data.datasets.forEach(ds => ds.data.shift());
+                        historyChart.data.datasets[0].data.shift();
                         waitHistory.shift();
                     }
-                    historyChart.update('none');
+                    historyChart.update();
                     refreshAnalyticsCharts();
                 }
             }
+        }
+
+        function showAnalyticsPage(finalize = false) {
+            if (finalize) {
+                isPaused = true;
+                const totalSeconds = baseTime + simTimeElapsed;
+                const hrs = Math.floor(totalSeconds / 3600);
+                const mins = Math.floor((totalSeconds % 3600) / 60);
+                const secs = Math.floor(totalSeconds % 60);
+                const finalLabel = `${hrs.toString().padStart(2,'0')}:${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+                if (historyChart) {
+                    const labels = historyChart.data.labels;
+                    if (labels[labels.length - 1] !== finalLabel) {
+                        const finalPct = stats.arrivals > 0 ? (stats.rezagados / stats.arrivals) * 100 : 0;
+                        const finalWait = stats.platformWaitCount > 0 ? stats.platformWaitTotal / stats.platformWaitCount : 0;
+                        historyChart.data.labels.push(finalLabel);
+                        historyChart.data.datasets[0].data.push(Number(finalPct.toFixed(2)));
+                        historyChart.data.datasets[1].data.push(2);
+                        waitHistory.push(Number(finalWait.toFixed(2)));
+                        if (historyChart.data.labels.length > 60) {
+                            historyChart.data.labels.shift();
+                            historyChart.data.datasets.forEach(dataset => dataset.data.shift());
+                            waitHistory.shift();
+                        }
+                        historyChart.update();
+                    }
+                }
+            }
+            updateAnalyticsDashboard();
+            refreshAnalyticsCharts();
+            document.getElementById('analytics-status').textContent = finalize
+                ? 'Simulación finalizada · resultados congelados'
+                : (isPaused ? 'Simulación en pausa · indicadores actuales' : 'Simulación en ejecución · indicadores en tiempo real');
+           document.getElementById('analytics-page').classList.add('active');
+           
+            // Ajustar las gráficas después de mostrar la pantalla
+            requestAnimationFrame(() => {
+                if (analyticsSaturationChart) {
+                    analyticsSaturationChart.resize();
+                }
+                
+                if (analyticsWaitChart) {
+                    analyticsWaitChart.resize();
+                }
+            });
+        }
+
+        function hideAnalyticsPage() {
+            document.getElementById('analytics-page').classList.remove('active');
+        }
+
+        function captureScenario() {
+            const avgWait = stats.platformWaitCount > 0 ? stats.platformWaitTotal / stats.platformWaitCount : 0;
+            return {
+                arrivals: stats.arrivals,
+                boarded: stats.boarded,
+                pending: Math.max(0, stats.arrivals - stats.boarded),
+                rezagados: stats.rezagados,
+                missedTrainEvents: stats.missedTrainEvents,
+                latePct: stats.arrivals > 0 ? (stats.rezagados / stats.arrivals) * 100 : 0,
+                avgWait,
+                params: {
+                    arrival: parseFloat(paramArrival.value),
+                    validation: parseFloat(paramTurnstile.value),
+                    activeTurnstiles: parseInt(paramActiveTs.value),
+                    trainCapacity: parseInt(paramTrainCapacity.value),
+                    headway: parseInt(paramHeadway.value),
+                    dwell: parseInt(paramDwell.value),
+                    speed: parseInt(paramSpeed.value)
+                }
+            };
+        }
+
+        function renderScenarioComparison() {
+            const status = document.getElementById('scenario-status');
+            const body = document.getElementById('scenario-comparison-body');
+            const saved = [];
+            if (scenarioA) saved.push('A');
+            if (scenarioB) saved.push('B');
+            status.textContent = saved.length ? `Escenario${saved.length > 1 ? 's' : ''} ${saved.join(' y ')} guardado${saved.length > 1 ? 's' : ''}.` : 'Aún no se han guardado escenarios.';
+            const rows = [
+                ['Ingresos', 'arrivals', 0, ''],
+                ['Abordajes', 'boarded', 0, ''],
+                ['Pendientes al finalizar', 'pending', 0, ''],
+                ['Personas únicas que perdieron un tren', 'rezagados', 0, ''],
+                ['Eventos de tren perdido', 'missedTrainEvents', 0, ''],
+                ['Porcentaje de personas retrasadas', 'latePct', 1, '%'],
+                ['Espera promedio en andén (s)', 'avgWait', 1, ' s']
+            ];
+            body.innerHTML = '';
+            if (!scenarioA && !scenarioB) {
+                body.innerHTML = '<tr><td colspan="4" class="py-3 text-slate-500">Guarda los resultados de A y B para compararlos.</td></tr>';
+                return;
+            }
+            rows.forEach(([label, key, decimals, suffix]) => {
+                const a = scenarioA ? scenarioA[key] : null;
+                const b = scenarioB ? scenarioB[key] : null;
+                const fmt = v => v === null ? '—' : `${Number(v).toFixed(decimals)}${suffix}`;
+                const diff = a !== null && b !== null ? `${b - a >= 0 ? '+' : ''}${(b - a).toFixed(decimals)}${suffix}` : '—';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td class="py-2 pr-4 text-slate-200">${label}</td><td class="py-2 px-3">${fmt(a)}</td><td class="py-2 px-3">${fmt(b)}</td><td class="py-2 px-3">${diff}</td>`;
+                body.appendChild(tr);
+            });
+        }
+
+        document.getElementById('btn-save-scenario-a').addEventListener('click', () => {
+            scenarioA = captureScenario();
+            renderScenarioComparison();
+        });
+        document.getElementById('btn-save-scenario-b').addEventListener('click', () => {
+            scenarioB = captureScenario();
+            renderScenarioComparison();
+        });
+
+        function updateAnalyticsDashboard() {
+            renderScenarioComparison();
+            const totalSeconds = baseTime + simTimeElapsed;
+
+            const hrs = Math.floor(totalSeconds / 3600);
+            const mins = Math.floor((totalSeconds % 3600) / 60);
+            const secs = Math.floor(totalSeconds % 60);
+
+            const timeText =
+                `${hrs.toString().padStart(2,'0')}:` +
+                `${mins.toString().padStart(2,'0')}:` +
+                `${secs.toString().padStart(2,'0')}`;
+
+            const avg = stats.platformWaitCount > 0
+                ? stats.platformWaitTotal / stats.platformWaitCount
+                : 0;
+
+            const pct = stats.arrivals > 0
+                ? (stats.rezagados / stats.arrivals) * 100
+                : 0;
+
+            // Conservación para la pantalla final
+            let qTs = 0, qTrans = 0, qPlat = 0;
+            passengers.forEach(p => {
+                if(!p.isOutbound) {
+                    if (['WALKING_TO_IN', 'PROCESSING'].includes(p.state)) qTs++;
+                    else if (['PROCESSED', 'WALKING_STAIRS_BASE', 'CLIMBING'].includes(p.state)) qTrans++;
+                    else if (['WALKING_PLATFORM', 'WAITING', 'BOARDING'].includes(p.state)) qPlat++;
+                }
+            });
+
+            const values = {
+                'a-time': timeText,
+                'a-arrivals': stats.arrivals,
+                'a-boarded': stats.boarded,
+                'a-late': stats.rezagados,
+                'a-percent': `${pct.toFixed(1)}%`,
+                'a-wait': `${avg.toFixed(1)} s`,
+
+                'a-turnstile': qTs,
+                'a-platform': qPlat,
+
+                'a-last': stats.platformWaitLast === null
+                    ? '--'
+                    : `${stats.platformWaitLast.toFixed(1)} s`,
+
+                'a-min': stats.platformWaitCount > 0
+                    ? `${stats.platformWaitMin.toFixed(1)} s`
+                    : '--',
+
+                'a-max': stats.platformWaitCount > 0
+                    ? `${stats.platformWaitMax.toFixed(1)} s`
+                    : '--',
+
+                'a-wait-count': stats.platformWaitCount,
+
+                // Parámetros usados en la simulación
+                'a-param-arrival': `${parseFloat(paramArrival.value).toFixed(1)} s`,
+                'a-param-turnstile': `${parseFloat(paramTurnstile.value).toFixed(1)} s`,
+                'a-param-headway': `${paramHeadway.value} s`,
+                'a-param-dwell': `${paramDwell.value} s`,
+                'a-param-speed': `x${paramSpeed.value}`,
+                'a-param-active-ts': `${paramActiveTs.value} torniquetes`,
+                'a-param-train-capacity': `${paramTrainCapacity.value} pasajeros`,
+                'a-param-lambda': `${(60 / parseFloat(paramArrival.value)).toFixed(1)} pax/min`,
+                'a-param-ts-capacity': `${((60 / parseFloat(paramTurnstile.value)) * parseInt(paramActiveTs.value)).toFixed(1)} pax/min`
+            };
+
+            Object.entries(values).forEach(([id, value]) => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.textContent = value;
+                }
+            });
         }
     </script>
 </body>
